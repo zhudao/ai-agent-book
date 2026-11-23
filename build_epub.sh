@@ -1,13 +1,20 @@
 #!/usr/bin/env bash
 # Build EPUB 3 editions from the Markdown sources.
-# Usage: ./build_epub.sh [all|zh-CN|zh-TW|en|es|id|ru|ta|vi|tr|ko|hu|ja|ar|he|ptbr]
-# Note: `all` does NOT include ja or ar while their PDF pipelines are being
-# validated. Build them explicitly with `./build_epub.sh ja|ar`.
+# Usage: ./build_epub.sh [all|zh-CN|zh-TW|en|es|id|ru|ta|vi|tr|ko|hu|ja|ar|he|ptbr|mn]
+# Add --with-reader-copy after all or zh-CN to also rasterize the Chinese edition.
+# The release workflow builds ja and ar separately after the main batch.
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 SELECTION="${1:-all}"
+READER_COPY="${2:-}"
+if [[ $# -gt 1 ]]; then
+    case "$#:$SELECTION:$READER_COPY" in
+        2:all:--with-reader-copy|2:zh-CN:--with-reader-copy) ;;
+        *) echo "Usage: $0 [edition] [--with-reader-copy (all or zh-CN only)]" >&2; exit 2 ;;
+    esac
+fi
 
 for command in pandoc pdftoppm python3; do
     if ! command -v "$command" >/dev/null 2>&1; then
@@ -16,10 +23,17 @@ for command in pandoc pdftoppm python3; do
     fi
 done
 
+# Pandoc 3.7 uses the older option names. Newer versions warn when given them.
+pandoc_style_options=(--mathml --highlight-style=kate)
+pandoc_help="$(pandoc --help)"
+if [[ "$pandoc_help" == *--math-method* && "$pandoc_help" == *--syntax-highlighting* ]]; then
+    pandoc_style_options=(--math-method=mathml --syntax-highlighting=kate)
+fi
+
 case "$SELECTION" in
-    all|zh-CN|zh-TW|en|es|id|ru|ta|vi|tr|ko|hu|ja|ar|he|ptbr) ;;
+    all|zh-CN|zh-TW|en|es|id|ru|ta|vi|tr|ko|hu|ja|ar|he|ptbr|mn) ;;
     *)
-        echo "Usage: $0 [all|zh-CN|zh-TW|en|es|id|ru|ta|vi|tr|ko|hu|ja|ar|he|ptbr]" >&2
+        echo "Usage: $0 [all|zh-CN|zh-TW|en|es|id|ru|ta|vi|tr|ko|hu|ja|ar|he|ptbr|mn]" >&2
         exit 2
         ;;
 esac
@@ -37,8 +51,8 @@ build_edition() {
             directory="book"
             title="深入理解 AI Agent：设计原理与工程实践"
             author="李博杰"
-            pdf="深入理解-AI-Agent-李博杰-v2.0.pdf"
-            output="深入理解-AI-Agent-李博杰-v2.0.epub"
+            pdf="深入理解-AI-Agent-李博杰-v3.0.pdf"
+            output="深入理解-AI-Agent-李博杰-v3.0.epub"
             title_label="扉页"
             toc_label="目录"
             chapters=(introduction.md chapter{1..10}.md afterword.md)
@@ -47,8 +61,8 @@ build_edition() {
             directory="book-zhtw"
             title="深入理解 AI Agent：設計原理與工程實踐"
             author="李博杰；繁體中文（台灣）翻譯：tigercosmos"
-            pdf="深入理解-AI-Agent-李博杰-v2.0-zhtw.pdf"
-            output="深入理解-AI-Agent-李博杰-v2.0-zhtw.epub"
+            pdf="深入理解-AI-Agent-李博杰-v3.0-zhtw.pdf"
+            output="深入理解-AI-Agent-李博杰-v3.0-zhtw.epub"
             title_label="扉頁"
             toc_label="目錄"
             chapters=(introduction.zhtw.md chapter{1..10}.zhtw.md afterword.zhtw.md)
@@ -57,8 +71,8 @@ build_edition() {
             directory="book-en"
             title="AI Agents in Depth: Design Principles and Engineering Practice"
             author="Bojie Li; English translation: Devaraj"
-            pdf="AI-Agents-in-Depth-Bojie-Li-v2.0.pdf"
-            output="AI-Agents-in-Depth-Bojie-Li-v2.0.epub"
+            pdf="AI-Agents-in-Depth-Bojie-Li-v3.0.pdf"
+            output="AI-Agents-in-Depth-Bojie-Li-v3.0.epub"
             title_label="Title Page"
             toc_label="Table of Contents"
             chapters=(introduction.md chapter{1..10}.md afterword.md)
@@ -67,8 +81,8 @@ build_edition() {
             directory="book-es"
             title="Agentes de IA en Profundidad: Principios de Diseño y Práctica de Ingeniería"
             author="Bojie Li; traducción al español: Santh"
-            pdf="AI-Agents-en-Profundidad-Bojie-Li-v2.0-es.pdf"
-            output="AI-Agents-en-Profundidad-Bojie-Li-v2.0-es.epub"
+            pdf="AI-Agents-en-Profundidad-Bojie-Li-v3.0-es.pdf"
+            output="AI-Agents-en-Profundidad-Bojie-Li-v3.0-es.epub"
             title_label="Portada"
             toc_label="Índice"
             chapters=(introduction.es.md chapter{1..10}.es.md afterword.es.md glossary.es.md reference-answers.es.md)
@@ -77,8 +91,8 @@ build_edition() {
             directory="book-id"
             title="Memahami AI Agent secara Mendalam: Prinsip Desain dan Praktik Rekayasa"
             author="Bojie Li; terjemahan bahasa Indonesia: JOICE HIELMAN ABBRORI"
-            pdf="AI-Agents-in-Depth-Bojie-Li-v2.0-id.pdf"
-            output="AI-Agents-in-Depth-Bojie-Li-v2.0-id.epub"
+            pdf="AI-Agents-in-Depth-Bojie-Li-v3.0-id.pdf"
+            output="AI-Agents-in-Depth-Bojie-Li-v3.0-id.epub"
             title_label="Halaman Judul"
             toc_label="Daftar Isi"
             chapters=(introduction.md chapter{1..10}.md afterword.md)
@@ -87,8 +101,8 @@ build_edition() {
             directory="book-ru"
             title="Глубокое понимание AI Agent: принципы проектирования и инженерная практика"
             author="Ли Боцзе (李博杰); русский перевод: ui99ru"
-            pdf="AI-Agents-in-Depth-v2.0-ru.pdf"
-            output="AI-Agents-in-Depth-v2.0-ru.epub"
+            pdf="AI-Agents-in-Depth-v3.0-ru.pdf"
+            output="AI-Agents-in-Depth-v3.0-ru.epub"
             title_label="Титульный лист"
             toc_label="Содержание"
             chapters=(introduction.md chapter{1..10}.md afterword.md)
@@ -97,8 +111,8 @@ build_edition() {
             directory="book-ta"
             title="AI Agents ஆழத்தில்: வடிவமைப்பு கோட்பாடுகள் மற்றும் பொறியியல் நடைமுறைகள்"
             author="Bojie Li; தமிழ் மொழிபெயர்ப்பு: Devaraj"
-            pdf="AI-Agents-in-Depth-Bojie-Li-v2.0-ta.pdf"
-            output="AI-Agents-in-Depth-Bojie-Li-v2.0-ta.epub"
+            pdf="AI-Agents-in-Depth-Bojie-Li-v3.0-ta.pdf"
+            output="AI-Agents-in-Depth-Bojie-Li-v3.0-ta.epub"
             title_label="தலைப்புப் பக்கம்"
             toc_label="பொருளடக்கம்"
             chapters=(introduction.ta.md chapter{1..10}.ta.md afterword.ta.md)
@@ -107,8 +121,8 @@ build_edition() {
             directory="book-vi"
             title="Hiểu sâu về AI Agent: Nguyên lý thiết kế và thực hành kỹ thuật"
             author="Lý Bác Kiệt; bản dịch tiếng Việt: Toàn Nguyễn"
-            pdf="AI-Agents-in-Depth-Bojie-Li-v2.0-vi.pdf"
-            output="AI-Agents-in-Depth-Bojie-Li-v2.0-vi.epub"
+            pdf="AI-Agents-in-Depth-Bojie-Li-v3.0-vi.pdf"
+            output="AI-Agents-in-Depth-Bojie-Li-v3.0-vi.epub"
             title_label="Trang tiêu đề"
             toc_label="Mục lục"
             chapters=(introduction.vi.md glossary.vi.md chapter{1..10}.vi.md afterword.vi.md)
@@ -117,8 +131,8 @@ build_edition() {
             directory="book-tr"
             title="AI Agent'ları Derinlemesine Anlamak: Tasarım İlkeleri ve Mühendislik Pratiği"
             author="Bojie Li; Türkçe çeviri: memisemre"
-            pdf="AI-Agents-in-Depth-Bojie-Li-v2.0-tr.pdf"
-            output="AI-Agents-in-Depth-Bojie-Li-v2.0-tr.epub"
+            pdf="AI-Agents-in-Depth-Bojie-Li-v3.0-tr.pdf"
+            output="AI-Agents-in-Depth-Bojie-Li-v3.0-tr.epub"
             title_label="Başlık Sayfası"
             toc_label="İçindekiler"
             chapters=(introduction.tr.md chapter{1..10}.tr.md afterword.tr.md)
@@ -127,8 +141,8 @@ build_edition() {
             directory="book-ko"
             title="AI 에이전트를 깊이 이해하기: 설계 원리와 엔지니어링 실전"
             author="Bojie Li; 한국어 번역: JeongJaeSoon"
-            pdf="AI-Agents-in-Depth-v2.0-ko.pdf"
-            output="AI-Agents-in-Depth-v2.0-ko.epub"
+            pdf="AI-Agents-in-Depth-v3.0-ko.pdf"
+            output="AI-Agents-in-Depth-v3.0-ko.epub"
             title_label="표제지"
             toc_label="목차"
             chapters=(introduction.ko.md chapter{1..10}.ko.md afterword.ko.md)
@@ -137,8 +151,8 @@ build_edition() {
             directory="book-hu"
             title="AI Agent – Tervezési elvek és gyakorlat"
             author="Bojie Li"
-            pdf="AI-Agents-in-Depth-v2.0-hu.pdf"
-            output="AI-Agents-in-Depth-v2.0-hu.epub"
+            pdf="AI-Agents-in-Depth-v3.0-hu.pdf"
+            output="AI-Agents-in-Depth-v3.0-hu.epub"
             title_label="Címlap"
             toc_label="Tartalomjegyzék"
             chapters=(introduction.md chapter{1..10}.md afterword.md)
@@ -147,8 +161,8 @@ build_edition() {
             directory="book-ja"
             title="AI Agent 徹底解説：設計原理とエンジニアリング実践"
             author="李博杰；日本語訳：Ikko Eltociear Ashimine"
-            pdf="AI-Agents-in-Depth-Bojie-Li-v2.0-ja.pdf"
-            output="AI-Agents-in-Depth-Bojie-Li-v2.0-ja.epub"
+            pdf="AI-Agents-in-Depth-Bojie-Li-v3.0-ja.pdf"
+            output="AI-Agents-in-Depth-Bojie-Li-v3.0-ja.epub"
             title_label="扉"
             toc_label="目次"
             chapters=(introduction.ja.md chapter{1..10}.ja.md afterword.ja.md)
@@ -157,8 +171,8 @@ build_edition() {
             directory="book-ar"
             title="فهم وكلاء الذكاء الاصطناعي بعمق: مبادئ التصميم والممارسة الهندسية"
             author="لي بوجي؛ الترجمة العربية: TheSyBuilder"
-            pdf="AI-Agents-in-Depth-v2.0-ar.pdf"
-            output="AI-Agents-in-Depth-v2.0-ar.epub"
+            pdf="AI-Agents-in-Depth-v3.0-ar.pdf"
+            output="AI-Agents-in-Depth-v3.0-ar.epub"
             title_label="صفحة العنوان"
             toc_label="المحتويات"
             chapters=(introduction.ar.md chapter{1..10}.ar.md afterword.ar.md)
@@ -167,18 +181,28 @@ build_edition() {
             directory="book-he"
             title="סוכני AI לעומק: עקרונות עיצוב ופרקטיקה הנדסית"
             author="בוג'י לי; תרגום לעברית: Itzik Woda"
-            pdf="AI-Agents-in-Depth-v2.0-he.pdf"
-            output="AI-Agents-in-Depth-v2.0-he.epub"
+            pdf="AI-Agents-in-Depth-v3.0-he.pdf"
+            output="AI-Agents-in-Depth-v3.0-he.epub"
             title_label="עמוד השער"
             toc_label="תוכן העניינים"
             chapters=(introduction.he.md chapter{1..10}.he.md afterword.he.md)
+            ;;
+        mn)
+            directory="book-mn"
+            title="AI Agent-ийг гүнзгий ойлгох: Дизайны зарчим ба инженерчлэлийн практик"
+            author="Bojie Li; Монгол орчуулга: ZERO1zx1"
+            pdf="AI-Agents-in-Depth-Bojie-Li-v3.0-mn.pdf"
+            output="AI-Agents-in-Depth-Bojie-Li-v3.0-mn.epub"
+            title_label="Нүүр хуудас"
+            toc_label="Агуулга"
+            chapters=(introduction.md chapter{1..10}.md afterword.md)
             ;;
         ptbr)
             directory="book-ptbr"
             title="Agentes de IA em Profundidade: Princípios de Design e Prática de Engenharia"
             author="Bojie Li; tradução para português do Brasil: Leonardo F. Nascimento"
-            pdf="AI-Agents-in-Depth-v2.0-ptbr.pdf"
-            output="AI-Agents-in-Depth-v2.0-ptbr.epub"
+            pdf="AI-Agents-in-Depth-v3.0-ptbr.pdf"
+            output="AI-Agents-in-Depth-v3.0-ptbr.epub"
             title_label="Página de rosto"
             toc_label="Sumário"
             chapters=(introduction.ptbr.md chapter{1..10}.ptbr.md afterword.ptbr.md reference-answers.ptbr.md)
@@ -217,9 +241,8 @@ build_edition() {
             --toc \
             --toc-depth=3 \
             --number-sections \
-            --mathml \
             --split-level=1 \
-            --highlight-style=kate \
+            "${pandoc_style_options[@]}" \
             --lua-filter="$ROOT/epub_external_links.lua" \
             --css="$ROOT/epub.css" \
             --epub-cover-image="$cover" \
@@ -238,15 +261,23 @@ build_edition() {
             "$edition_dir/$output" "$title_label" "$toc_label"
     fi
 
-    if command -v epubcheck >/dev/null 2>&1; then
-        epubcheck "$edition_dir/$output"
-    else
-        echo "Built $directory/$output (install epubcheck to validate it)."
+    local file
+    local -a outputs=("$output")
+    if [[ "$language" == "zh-CN" && "$READER_COPY" == "--with-reader-copy" ]]; then
+        python3 "$ROOT/scripts/kindle_epub_patcher.py" "$edition_dir/$output"
+        outputs+=("${output%.epub}-kindle.epub")
     fi
+    for file in "${outputs[@]}"; do
+        if command -v epubcheck >/dev/null 2>&1; then
+            epubcheck "$edition_dir/$file"
+        else
+            echo "Built $directory/$file (install epubcheck to validate it)."
+        fi
+    done
 }
 
 if [ "$SELECTION" = "all" ]; then
-    for language in zh-CN zh-TW en es id ru ta vi tr ko hu he ptbr; do
+    for language in zh-CN zh-TW en es id ru ta vi tr ko hu he ptbr mn; do
         build_edition "$language"
     done
 else

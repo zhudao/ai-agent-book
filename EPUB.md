@@ -1,6 +1,6 @@
 # Build the EPUB editions
 
-The repository can build EPUB 3 editions for Simplified Chinese, Traditional Chinese (Taiwan), English, Spanish, Indonesian, Arabic, Russian, Tamil, Vietnamese, Japanese, Turkish, Korean, and Hungarian from the same Markdown sources used by the PDF editions. Arabic EPUBs use RTL page progression while preserving LTR layout for code and mathematics.
+The repository can build EPUB 3 editions for Simplified Chinese, Traditional Chinese (Taiwan), English, Spanish, Indonesian, Arabic, Russian, Tamil, Vietnamese, Japanese, Turkish, Korean, Hungarian, Hebrew, Brazilian Portuguese, and Mongolian from the same Markdown sources used by the PDF editions. Arabic EPUBs use RTL page progression while preserving LTR layout for code and mathematics.
 
 Install [Pandoc](https://pandoc.org/), Poppler (`pdftoppm`), and optionally [EPUBCheck](https://www.w3.org/publishing/epubcheck/). The builder uses each PDF's first page as the corresponding EPUB cover. When EPUBCheck is available, the builder validates every generated book.
 
@@ -15,6 +15,7 @@ Build one language by passing its language code:
 ```bash
 ./build_epub.sh zh-CN
 ./build_epub.sh zh-TW
+./build_epub.sh mn
 ./build_epub.sh en
 ./build_epub.sh es
 ./build_epub.sh id
@@ -34,14 +35,16 @@ with `./build_epub.sh ja` or `./build_epub.sh ar`.
 
 The builder writes each `.epub` beside its language's PDF. Generated EPUB files are ignored by Git.
 
-## Kindle reflowable edition
+## Chinese reader-compatible edition
 
-For a Kindle copy, convert a book produced by the builder or downloaded from the release. The converter renders mathematical expressions and SVG diagrams locally using Chromium. It saves a separate `-kindle.epub` beside the source and retains the formula text as image descriptions.
+The [Chinese compatibility download](https://github.com/bojieli/ai-agent-book/releases/download/latest/AI-Agents-in-Depth-zh-CN-kindle.epub) keeps prose reflowable and packages diagrams and formulas as PNGs for readers with limited SVG or MathML support. On macOS, open a downloaded EPUB in Books to read offline. To build both Chinese editions from the manuscript, install the dependencies below and run `./build_epub.sh zh-CN --with-reader-copy`. The rolling release uses the same option with `all`.
+
+To convert a single EPUB that you already have, use the last command below. The converter renders mathematical expressions and SVG diagrams locally using Chromium. It saves a separate `-kindle.epub` beside the source and retains the formula text as image descriptions.
 
 ```bash
 python -m pip install lxml playwright
 python -m playwright install chromium
-python scripts/kindle_epub_patcher.py "book/深入理解-AI-Agent-李博杰-v2.0.epub"
+python scripts/kindle_epub_patcher.py "book/深入理解-AI-Agent-李博杰-v3.0.epub"
 ```
 
 Run `epubcheck` on the generated copy before distributing it. Font selection and layout can vary between reading devices.
